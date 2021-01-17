@@ -1,0 +1,96 @@
+
+function Channels(props) {
+
+   
+    const [values,setValues] = useState({
+        name : "" ,
+        description : ""
+    })
+
+    const [channel,setChannel] = useState([])
+    const {name,description,channelss} = values
+
+    const channelsRef = firebase.database().ref("channels");
+
+    let c = []
+
+    useEffect( () =>  {
+
+        channelsRef.on('child_added',(snap) => {
+            setChannel( (currentState) => {
+                let updateState = [...currentState]
+                updateState.push(snap.val());
+                return updateState;
+            }  )
+            
+        } )
+        
+
+       },[]  )
+
+       
+
+    const handleClick = () => {
+        if(name && description){
+            const key = channelsRef.push().key;
+
+            const channel = {
+                id : key,
+                name : name,
+                description : description,
+                createdBy : {
+                    name : props.user.displayName
+                }
+            }
+
+            channelsRef.child(key).
+            update(channel)
+            .then( () => {
+                setValues({name : "" , description : ""})
+            }  )
+            .catch(err => {console.log(err)})
+
+        
+        }
+    }
+
+    const handleChange = e => {
+        setValues({
+            ...values,
+            [e.target.name] : e.target.value
+        })
+    }
+
+    const showChannel =() => {
+        const length = channel.length
+        if(channel.length === length){
+             channel.map((item) => {
+            return <p>{item.name}</p>    
+            })
+        }
+    }
+
+    return (
+        <div>
+           <h1>We add Channels here</h1> 
+           <input name = "name" placeholder = "Add Channel Name here" onChange = {handleChange} value = {name} />
+           <input  name = "description" placeholder = "Add Description here" onChange = {handleChange} value = {description} />
+           <br></br>
+           <button  onClick = {handleClick}>Save channel</button>
+           <br></br>
+            {JSON.stringify(values)}
+            
+            {showChannel()}
+            
+    
+        </div>
+    )
+}
+
+const mapStateToProps = (state) => {
+        return {
+            user : state.user
+        }
+}
+
+export default connect(mapStateToProps)(Channels)
